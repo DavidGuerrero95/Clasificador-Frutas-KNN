@@ -1,7 +1,4 @@
-import numpy as np
-import time
 import pickle
-from pdiFun import *
 from ExtraeFrutas import *
 from ExtraeCaracteristicas import *
 
@@ -14,8 +11,9 @@ def make_720p():
     cam.set(3, 1290)  # Ancho en pixeles
     cam.set(4, 720)  # Alto  en pixeles
 
+
 make_720p()
-model = pickle.load(open('model_KNN_21_text_perime.pkl','rb'))
+model = pickle.load(open('model_KNN_21_text_perime.pkl', 'rb'))
 
 while True:
     ret, img = cam.read()
@@ -26,14 +24,13 @@ while True:
     if cv2.waitKey(1) == 27:  # Salida con Esc
         break
 
-    if cv2.waitKey(0) == 99:
+    if cv2.waitKey(0) == 99: # C para capturar
         foto = img.copy()
-        foto = extraer_frutas(foto)
-        #cv2.imshow('FRUTA BIEN CHIMBITA',foto)
+        foto = extraer_frutas(foto)  # Extrae foto binarizada
+        # cv2.imshow('FRUTA BIEN CHIMBITA',foto)
         foto2 = foto.copy()
         caracteristicas = extraer_caracteristicas(foto2)
         fruit_num = model.predict(caracteristicas)
         print(translate(fruit_num))
-
 
 cv2.destroyAllWindows()

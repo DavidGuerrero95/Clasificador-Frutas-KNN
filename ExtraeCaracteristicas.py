@@ -3,7 +3,6 @@ import numpy as np
 import cv2
 import math
 import pandas as pd
-from sklearn import preprocessing
 
 from pdiFun import *
 from skimage import filters, measure
@@ -49,6 +48,7 @@ def fun_normalize(p_azul, p_verde, p_rojo, p_area, axis_ratio, porcentaje_textur
 def extraer_caracteristicas(img):
     dataf = pd.DataFrame(columns=['AZUL', 'Verde', 'Rojo', 'Area', 'Ratio', 'Textura','Perimetro'])
     #dataf = pd.DataFrame(columns=['azul', 'verde', 'rojo', 'area', 'ratio', 'textura','perimetro'])
+
     # # #Filtrado medio
     imgMedF = cv2.medianBlur(img, 55)
 
@@ -103,7 +103,7 @@ def extraer_caracteristicas(img):
     ## Graficas
     fig, ax = plt.subplots()
     ax.imshow(img, cmap=plt.cm.gray)
-    #ax.imshow(borde, cmap=plt.cm.gray)
+    ax.imshow(borde, cmap=plt.cm.gray)
     for props in regions:
         y0, x0 = props.centroid
         orientation = props.orientation
