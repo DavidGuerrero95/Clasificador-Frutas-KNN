@@ -1,13 +1,32 @@
-# Importe de librerias
-import numpy as np
-import cv2
+"""
+--------------------------------------------------------------------------
+------- CLASIFIACIÓN DE FRUTAS -----------------------------------------
+------- Coceptos básicos de PDI ------------------------------------------
+------- Por: leonardo Fuentes Bohórquez  leoardo.fuentes@udea.edu.co (1) -
+--------     David Santiago Guerrero Mertinez  davids.guerrero@udea.edu.co (2)
+--------     Estudiantes de ingeniería electrónica UdeA  ----------------
+--------     CC 1101076907 (1), CC 1085319765 (2) ------------------------
+------- Curso Básico de Procesamiento de Imágenes y Visión Artificial-----
+------- 11 Septiembre de 2022 -------------------------------------------------
+--------------------------------------------------------------------------
+"""
+
+'''
+--------------------------------------------------------------------------
+--1. Importar librerias y modulos necesarios -----------------------------
+--------------------------------------------------------------------------
+'''
 import math
 import pandas as pd
-
 from pdiFun import *
 from skimage import filters, measure
 import matplotlib.pyplot as plt
 
+'''
+--------------------------------------------------------------------------
+--2. Inicializar valores iniciales para la normalizacion del dataset -----
+--------------------------------------------------------------------------
+'''
 azul_min = 0.043873
 azul_max = 0.37589
 verde_min = 0.064716
@@ -23,6 +42,12 @@ textura_max = 0.35895
 perimetro_min = 0.0
 perimetro_max = 2627
 
+'''
+--------------------------------------------------------------------------
+--3. Funcion que normaliza un valor --------------------------------------
+--------------------------------------------------------------------------
+'''
+
 
 def normalize(value, max, min):
     if min <= value < max:
@@ -34,6 +59,13 @@ def normalize(value, max, min):
     return value
 
 
+'''
+--------------------------------------------------------------------------
+--3. Funcion que normaliza todos los valores -----------------------------
+--------------------------------------------------------------------------
+'''
+
+
 def fun_normalize(p_azul, p_verde, p_rojo, p_area, axis_ratio, porcentaje_textura, perimetro):
     p_azul = normalize(p_azul, azul_max, azul_min)
     p_verde = normalize(p_verde, verde_max, verde_min)
@@ -41,66 +73,93 @@ def fun_normalize(p_azul, p_verde, p_rojo, p_area, axis_ratio, porcentaje_textur
     p_area = normalize(p_area, area_max, area_min)
     axis_ratio = normalize(axis_ratio, ratio_max, ratio_min)
     porcentaje_textura = normalize(porcentaje_textura, textura_max, textura_min)
-    perimetro = normalize(perimetro,perimetro_max,perimetro_min)
+    perimetro = normalize(perimetro, perimetro_max, perimetro_min)
     return p_azul, p_verde, p_rojo, p_area, axis_ratio, porcentaje_textura, perimetro
 
 
+'''
+--------------------------------------------------------------------------
+--4. Funcion extrae las caracteristicas en un dataset --------------------
+--------------------------------------------------------------------------
+'''
+
+
 def extraer_caracteristicas(img):
-    dataf = pd.DataFrame(columns=['AZUL', 'Verde', 'Rojo', 'Area', 'Ratio', 'Textura','Perimetro'])
-    #dataf = pd.DataFrame(columns=['azul', 'verde', 'rojo', 'area', 'ratio', 'textura','perimetro'])
+    # Inicializacion del dataframe
+    dataf = pd.DataFrame(columns=['AZUL', 'Verde', 'Rojo', 'Area', 'Ratio', 'Textura', 'Perimetro'])
+    # dataf = pd.DataFrame(columns=['azul', 'verde', 'rojo', 'area', 'ratio', 'textura','perimetro'])
 
-    # # #Filtrado medio
-    imgMedF = cv2.medianBlur(img, 55)
+    img_med_f = cv2.medianBlur(img, 55)  # Filtrado medio
+    cv2.imshow('Filtrado medio', img_med_f)
+    gris = grayFun(img_med_f)  # Escala de grises
+    img_bin = binFun(gris)  # binarizada 0 - 255
+    b, g, r = cv2.split(img)  # Separar
+    cv2.imshow('blue', b)
+    cv2.imshow('gren', g)
+    cv2.imshow('red', r)
 
-    gris = grayFun(imgMedF)  # Escala de grises
-    imgBin = binFun(gris)  # binarizada 0. 255
+    bb = b.copy()
+    bb[img_bin == 0] = 0
 
-    B, G, R = cv2.split(img)  # Separar Capas
-    BB = B.copy()
-    BB[imgBin == 0] = 0
-
-    """Texturas (Bordes)"""
-    # Canny Edge Detection
-    edges = cv2.Canny(image=B, threshold1=20, threshold2=20)  # Canny Edge Detection
+    '''
+    --5. Texturas (Bordes) ---------------------------------------------------
+    '''
+    edges = cv2.Canny(image=b, threshold1=20, threshold2=20)  # Canny Edge Detection
+    cv2.imshow('Textura', edges)
 
     # Canny Edge Detection para el perimetro
-    borde = cv2.Canny(image=R, threshold1=100, threshold2=200)  # Canny Edge Detection
+    borde = cv2.Canny(image=r, threshold1=100, threshold2=200)  # Canny Edge Detection
+    cv2.imshow('borde', borde)
+    '''
+    --6. Tamaño imagen  Marco total de visón ---------------------------------
+    '''
+    w = b.shape[1]
+    h = b.shape[0]
+    area_foto = w * h
 
-    """Tamaño imagen  Marco total de visón"""
-    W = B.shape[1]
-    H = B.shape[0]
-    areaFoto = W * H
+    '''
+    --7. Tamaño fruta --------------------------------------------------------
+    '''
+    area = (np.sum(img_bin))  # Area de fruta en sumas de 255 por pixel
+    area_pixel = area / 255  # Area de fruta en sumas de 1 por pixel
+    p_area = area_pixel / area_foto  # Area de la fruta respecto al tamaño de la foto
 
-    """Tamaño Fruta"""
-    Area = (np.sum(imgBin))  # Area de fruta en sumas de 255 por pixel
-    areaPixel = Area / 255  # Area de fruta en sumas de 1 por pixel
-    pArea = areaPixel / areaFoto  # Area de la fruta respecto al tamaño de la foto
+    '''
+    --8. Color ---------------------------------------------------------------
+    '''
+    azul = np.sum(b)
+    verde = np.sum(g)
+    rojo = np.sum(r)
 
-    """Color"""
-    azul = np.sum(B)
-    verde = np.sum(G)
-    rojo = np.sum(R)
+    '''
+    --9. porcentaje de color respecto a la escala de  0 - 255 ----------------
+    '''
+    p_azul = azul / area
+    p_verde = verde / area
+    p_rojo = rojo / area
 
-    # porcentaje de color respecto a la escala de  0 - 255
-    pAzul = azul / Area
-    pVerde = verde / Area
-    pRojo = rojo / Area
+    '''
+    --10. Eliminar basuras internas del perimetro ----------------------------
+    '''
+    borde = bwareaopen(borde, p_area * 5000)
 
-    """Eliminar basuras internas del perimetro"""
-    borde = bwareaopen(borde, pArea * 5000)
+    '''
+    --11. Valor del perimetro en pixeles -------------------------------------
+    '''
 
-    """Valor del perimetro en pixeles"""
     perimetro = (borde.sum()) / 255
 
-    """Region props skimage"""
-    label_img = measure.label(imgBin)
+    '''
+    --12. Region props skimage -------------------------------------
+    '''
+    label_img = measure.label(img_bin)
     regions = measure.regionprops(label_img)
     props = measure.regionprops_table(label_img, properties=('centroid',
                                                              'orientation',
                                                              'major_axis_length',
                                                              'minor_axis_length'))
     props1 = props.copy()
-    ## Graficas
+    # Graficas
     fig, ax = plt.subplots()
     ax.imshow(img, cmap=plt.cm.gray)
     ax.imshow(borde, cmap=plt.cm.gray)
@@ -123,32 +182,29 @@ def extraer_caracteristicas(img):
 
         ax.axis((0, 1280, 720, 0))
         plt.show()
-    ## End Graficas
+    # End Graficas
 
     dt = pd.DataFrame(props1).head()
-    majorAxis = dt.iloc[0, 3]
-    minorAxis = dt.iloc[0, 4]
-    textura = edges.sum() / Area  # Pondera el total de texturas en el area de la fruta
+    major_axis = dt.iloc[0, 3]
+    minor_axis = dt.iloc[0, 4]
+    textura = edges.sum() / area  # Pondera el total de texturas en el area de la fruta
 
     # Relacion de ejes
-    axisRatio = minorAxis / majorAxis
+    axis_ratio = minor_axis / major_axis
 
-    # *********************************************************************
+    '''
+    --13. Normalizar Caracteristicas -------------------------------------
+    '''
+    p_azul, p_verde, p_rojo, p_area, axis_ratio, textura, perimetro = fun_normalize(p_azul, p_verde, p_rojo, p_area,
+                                                                                   axis_ratio,
+                                                                                   textura, perimetro)
+    '''
+    --14. Almacema Caracteristicas -------------------------------------
+    '''
+    dataf.loc[0] = [p_azul, p_verde, p_rojo, p_area, axis_ratio, textura, perimetro]
 
-    """Guardar Caracteristicas"""
-    pAzul, pVerde, pRojo, pArea, axisRatio, textura, perimetro = fun_normalize(pAzul, pVerde, pRojo, pArea, axisRatio, textura, perimetro)
-    dataf.loc[0] = [pAzul, pVerde, pRojo, pArea, axisRatio, textura, perimetro]
-
-    # *********************************************************************
-    """Guardar Caracteristicas"""
-    #print(f'Axis Ratio: {axisRatio}, Azul: {pAzul}, Rojo: {pRojo}, Verde: {pVerde}, Area: {pArea}, Ratio: {axisRatio}, Textura: {porcentaje_textura}')
-
-    #pAzul, pVerde, pRojo, pArea, axisRatio, porcentaje_textura = fun_normalize(pAzul, pVerde, pRojo, pArea, axisRatio, porcentaje_textura)
-    #dataf.loc[0] = [pAzul, pVerde, pRojo, pArea, axisRatio, porcentaje_textura]
-    # Estandarizando
-    #scaler = preprocessing.StandardScaler()
-    #scaler = scaler.fit(dataf[dataf.columns])
-    #dataf[dataf.columns] = scaler.transform(dataf[dataf.columns])
-    print(f'Axis Ratio: {axisRatio}, Azul: {pAzul}, Rojo: {pRojo}, Verde: {pVerde}, Area: {pArea}, Ratio: {axisRatio}'
-          f', Textura: {textura}, Perimetro: {perimetro}')
-    return dataf
+    print(
+        f'Axis Ratio: {axis_ratio}, Azul: {p_azul}, Rojo: {p_rojo}, Verde: {p_verde}, Area: {p_area}, Ratio: {axis_ratio}'
+        f', Textura: {textura}, Perimetro: {perimetro}') # Imprime caracteristicas
+    print(dataf)
+    return dataf # retorna dataset con las caracteristicas extraidas
