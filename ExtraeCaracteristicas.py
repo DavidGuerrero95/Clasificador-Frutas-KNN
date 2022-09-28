@@ -90,13 +90,13 @@ def extraer_caracteristicas(img):
     # dataf = pd.DataFrame(columns=['azul', 'verde', 'rojo', 'area', 'ratio', 'textura','perimetro'])
 
     img_med_f = cv2.medianBlur(img, 55)  # Filtrado medio
-    cv2.imshow('Filtrado medio', img_med_f)
+    # cv2.imshow('Filtrado medio', img_med_f)
     gris = grayFun(img_med_f)  # Escala de grises
     img_bin = binFun(gris)  # binarizada 0 - 255
     b, g, r = cv2.split(img)  # Separar
-    cv2.imshow('blue', b)
-    cv2.imshow('gren', g)
-    cv2.imshow('red', r)
+    # cv2.imshow('blue', b)
+    # cv2.imshow('gren', g)
+    # cv2.imshow('red', r)
 
     bb = b.copy()
     bb[img_bin == 0] = 0
@@ -105,11 +105,11 @@ def extraer_caracteristicas(img):
     --5. Texturas (Bordes) ---------------------------------------------------
     '''
     edges = cv2.Canny(image=b, threshold1=20, threshold2=20)  # Canny Edge Detection
-    cv2.imshow('Textura', edges)
+    # cv2.imshow('Textura', edges)
 
     # Canny Edge Detection para el perimetro
     borde = cv2.Canny(image=r, threshold1=100, threshold2=200)  # Canny Edge Detection
-    cv2.imshow('borde', borde)
+    # cv2.imshow('borde', borde)
     '''
     --6. Tamaño imagen  Marco total de visón ---------------------------------
     '''
@@ -160,9 +160,9 @@ def extraer_caracteristicas(img):
                                                              'minor_axis_length'))
     props1 = props.copy()
     # Graficas
-    fig, ax = plt.subplots()
-    ax.imshow(img, cmap=plt.cm.gray)
-    ax.imshow(borde, cmap=plt.cm.gray)
+    # fig, ax = plt.subplots()
+    # ax.imshow(img, cmap=plt.cm.gray)
+    # ax.imshow(borde, cmap=plt.cm.gray)
     for props in regions:
         y0, x0 = props.centroid
         orientation = props.orientation
@@ -171,17 +171,17 @@ def extraer_caracteristicas(img):
         x2 = x0 - math.sin(orientation) * 0.5 * props.major_axis_length
         y2 = y0 - math.cos(orientation) * 0.5 * props.major_axis_length
 
-        ax.plot((x0, x1), (y0, y1), '-r', linewidth=2.5)
-        ax.plot((x0, x2), (y0, y2), '-r', linewidth=2.5)
-        ax.plot(x0, y0, '.g', markersize=15)
+        # ax.plot((x0, x1), (y0, y1), '-r', linewidth=2.5)
+        # ax.plot((x0, x2), (y0, y2), '-r', linewidth=2.5)
+        # ax.plot(x0, y0, '.g', markersize=15)
 
         minr, minc, maxr, maxc = props.bbox
         bx = (minc, maxc, maxc, minc, minc)
         by = (minr, minr, maxr, maxr, minr)
-        ax.plot(bx, by, '-b', linewidth=2.5)
+        ##ax.plot(bx, by, '-b', linewidth=2.5)
 
-        ax.axis((0, 1280, 720, 0))
-        plt.show()
+        ##ax.axis((0, 1280, 720, 0))
+        ##plt.show()
     # End Graficas
 
     dt = pd.DataFrame(props1).head()
@@ -196,8 +196,8 @@ def extraer_caracteristicas(img):
     --13. Normalizar Caracteristicas -------------------------------------
     '''
     p_azul, p_verde, p_rojo, p_area, axis_ratio, textura, perimetro = fun_normalize(p_azul, p_verde, p_rojo, p_area,
-                                                                                   axis_ratio,
-                                                                                   textura, perimetro)
+                                                                                    axis_ratio,
+                                                                                    textura, perimetro)
     '''
     --14. Almacema Caracteristicas -------------------------------------
     '''
@@ -205,6 +205,7 @@ def extraer_caracteristicas(img):
 
     print(
         f'Axis Ratio: {axis_ratio}, Azul: {p_azul}, Rojo: {p_rojo}, Verde: {p_verde}, Area: {p_area}, Ratio: {axis_ratio}'
-        f', Textura: {textura}, Perimetro: {perimetro}') # Imprime caracteristicas
+        f', Textura: {textura}, Perimetro: {perimetro}')  # Imprime caracteristicas
     print(dataf)
-    return dataf # retorna dataset con las caracteristicas extraidas
+
+    return dataf, edges, borde  # retorna dataset con las caracteristicas extraidas

@@ -17,9 +17,13 @@
 --------------------------------------------------------------------------
 '''
 import pickle
-from ExtraeFrutas import *
+import imutils
 from ExtraeCaracteristicas import *
-
+from ExtraeFrutas import *
+from tkinter import *
+from tkinter import filedialog
+from PIL import Image
+from PIL import ImageTk
 '''
 --------------------------------------------------------------------------
 --2. Lectura de la cámara ------------------------------------------------
@@ -32,6 +36,27 @@ cam = cv2.VideoCapture(0)
 --3. Elegir lectura a resolusión de 720 HD -------------------------------
 --------------------------------------------------------------------------
 '''
+
+
+def tomar_foto(img):
+    global image
+    # Leer la imagen de entrada y la redimensionamos
+    image = img.copy()
+    image = imutils.resize(image, height=380)
+    # Para visualizar la imagen de entrada en la GUI
+    imageToShow = imutils.resize(image, width=180)
+    im = Image.fromarray(imageToShow)
+    img = ImageTk.PhotoImage(image=im)
+    lblInputImage.configure(image=img)
+    lblInputImage.image = img
+    # Label IMAGEN DE ENTRADA
+    lblInfo1 = Label(root, text="IMAGEN DE ENTRADA:")
+    lblInfo1.grid(column=0, row=1, padx=5, pady=5)
+    # Al momento que leemos la imagen de entrada, vaciamos
+    # la iamgen de salida y se limpia la selección de los
+    # radiobutton
+    lblOutputImage.image = ""
+    selected.set(0)
 
 
 def make_720p():
@@ -69,12 +94,13 @@ while True:
     --------------------------------------------------------------------------
     '''
     if cv2.waitKey(0) == 99:
-        foto = img.copy() # Sacar copia de la imagen
+        foto = img.copy()  # Sacar copia de la imagen
         foto = extraer_frutas(foto)  # Extrae foto binarizada
         foto2 = foto.copy()  # Sacar copia de la imagen
-        caracteristicas = extraer_caracteristicas(foto2) # Extraer Dataset Con las caracteristicas listo para clasificar
-        fruit_num = model.predict(caracteristicas) # Clasificacion de la fruta
-        print(f'La fruta es: {translate(fruit_num)}') # Que fruta fue clasificada
+        caracteristicas = extraer_caracteristicas(
+            foto2)  # Extraer Dataset Con las caracteristicas listo para clasificar
+        fruit_num = model.predict(caracteristicas)  # Clasificacion de la fruta
+        print(f'La fruta es: {translate(fruit_num)}')  # Que fruta fue clasificada
 
 '''
 --------------------------------------------------------------------------
